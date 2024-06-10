@@ -1,11 +1,11 @@
 package com.example.livros;
 
-
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,7 +16,7 @@ import android.widget.Toast;
 public class UpdateActivity extends AppCompatActivity {
 
     EditText title_input, author_input, pages_input;
-    Button update_button, delete_button, btn_voltar_consulta;
+    Button update_button, delete_button;
 
     String id, title, author, pages;
 
@@ -31,10 +31,10 @@ public class UpdateActivity extends AppCompatActivity {
         update_button = findViewById(R.id.update_button);
         delete_button = findViewById(R.id.delete_button);
 
-        //First we call this
+        // Primeiro chamamos este método
         getAndSetIntentData();
 
-        //Set actionbar title after getAndSetIntentData method
+        // Define o título da actionbar após o método getAndSetIntentData
         ActionBar ab = getSupportActionBar();
         if (ab != null) {
             ab.setTitle(title);
@@ -43,33 +43,72 @@ public class UpdateActivity extends AppCompatActivity {
         update_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //And only then we call this
                 MyDatabaseHelper myDB = new MyDatabaseHelper(UpdateActivity.this);
                 title = title_input.getText().toString().trim();
                 author = author_input.getText().toString().trim();
                 pages = pages_input.getText().toString().trim();
                 myDB.updateData(id, title, author, pages);
+
+                // Notifica a MainActivity para atualizar a lista
+                setResult(RESULT_OK);
+                finish();
             }
         });
+
         delete_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 confirmDialog();
             }
         });
-
     }
 
-    void getAndSetIntentData(){
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Recarrega os dados da Intent
+        getAndSetIntentData();
+    }
+
+    void deleteBook(String id) {
+        MyDatabaseHelper myDB = new MyDatabaseHelper(UpdateActivity.this);
+        myDB.deleteOneRow(id);
+
+        // Reiniciar a MainActivity
+        Intent intent = new Intent(UpdateActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
+    }
+
+    private void confirmDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete " + title + " ?");
+        builder.setMessage("Are you sure you want to delete " + title + " ?");
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                deleteBook(id);
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+            }
+        });
+        builder.create().show();
+    }
+
+    void getAndSetIntentData() {
         if(getIntent().hasExtra("id") && getIntent().hasExtra("title") &&
                 getIntent().hasExtra("author") && getIntent().hasExtra("pages")){
-            //Getting Data from Intent
+            // Obter dados da Intent
             id = getIntent().getStringExtra("id");
             title = getIntent().getStringExtra("title");
             author = getIntent().getStringExtra("author");
             pages = getIntent().getStringExtra("pages");
 
-            //Setting Intent Data
+            // Definir os dados na Intent
             title_input.setText(title);
             author_input.setText(author);
             pages_input.setText(pages);
@@ -77,30 +116,5 @@ public class UpdateActivity extends AppCompatActivity {
         }else{
             Toast.makeText(this, "No data.", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    void confirmDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Delete " + title + " ?");
-        builder.setMessage("Are you sure you want to delete " + title + " ?");
-        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                MyDatabaseHelper myDB = new MyDatabaseHelper(UpdateActivity.this);
-                myDB.deleteOneRow(id);
-                finish();
-            }
-        });
-        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-
-            }
-        });
-        builder.create().show();
-    }
-
-    public void fechar_tela(View v){
-        this.finish();
     }
 }

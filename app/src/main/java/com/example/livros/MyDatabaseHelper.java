@@ -35,6 +35,7 @@ class MyDatabaseHelper extends SQLiteOpenHelper {
                 COLUMN_PAGES + " INTEGER);";
         db.execSQL(query);
     }
+
     @Override
     public void onUpgrade(SQLiteDatabase db, int i, int i1) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
@@ -96,6 +97,12 @@ class MyDatabaseHelper extends SQLiteOpenHelper {
     void deleteAllData(){
         SQLiteDatabase db = this.getWritableDatabase();
         db.execSQL("DELETE FROM " + TABLE_NAME);
+    }
+
+    public void deleteOneRowAndUpdateList(String id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("my_library", "ID=?", new String[]{id});
+        db.close();
     }
 
 }

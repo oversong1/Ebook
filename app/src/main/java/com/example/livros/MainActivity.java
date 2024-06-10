@@ -1,28 +1,24 @@
 package com.example.livros;
 
-import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.view.ContextMenu;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
-
-
-
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -52,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, AddActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, 1);
             }
         });
 
@@ -68,23 +64,27 @@ public class MainActivity extends AppCompatActivity {
                 book_pages);
         recyclerView.setAdapter(customAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == 1){
-            recreate();
-        }
+    protected void onResume() {
+        super.onResume();
+        // Recarrega os dados da lista de livros
+        storeDataInArrays();
+        // Notifica o adaptador sobre a mudança nos dados
+        customAdapter.notifyDataSetChanged();
     }
 
-    void storeDataInArrays(){
+    void storeDataInArrays() {
         Cursor cursor = myDB.readAllData();
         if(cursor.getCount() == 0){
             empty_imageview.setVisibility(View.VISIBLE);
             no_data.setVisibility(View.VISIBLE);
-        }else{
+        } else {
+            book_id.clear();
+            book_title.clear();
+            book_author.clear();
+            book_pages.clear();
             while (cursor.moveToNext()){
                 book_id.add(cursor.getString(0));
                 book_title.add(cursor.getString(1));
@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    void confirmDialog(){
+    void confirmDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Delete All?");
         builder.setMessage("Are you sure you want to delete all Data?");
@@ -120,19 +120,29 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialogInterface, int i) {
                 MyDatabaseHelper myDB = new MyDatabaseHelper(MainActivity.this);
                 myDB.deleteAllData();
-                //Refresh Activity
-                Intent intent = new Intent(MainActivity.this, MainActivity.class);
-                startActivity(intent);
+                // Reiniciar a MainActivity
+                Intent intent = getIntent();
                 finish();
+                startActivity(intent);
             }
         });
         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-
             }
         });
         builder.create().show();
     }
-}
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 1) { // Código de requisição para AddActivity
+            if(resultCode == RESULT_OK) {
+                // Atualiza a lista após adicionar ou atualizar um livro
+                storeDataInArrays();
+                customAdapter.notifyDataSetChanged();
+            }
+        }
+    }
+}

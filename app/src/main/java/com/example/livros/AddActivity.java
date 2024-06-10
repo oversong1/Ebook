@@ -21,7 +21,8 @@ public class AddActivity extends AppCompatActivity {
         author_input = findViewById(R.id.author_input);
         pages_input = findViewById(R.id.pages_input);
         add_button = findViewById(R.id.add_button);
-        btn_voltar_consulta=(Button) findViewById(R.id.btn_voltar_consulta);
+        btn_voltar_consulta = findViewById(R.id.btn_voltar_consulta);
+
         add_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -29,6 +30,15 @@ public class AddActivity extends AppCompatActivity {
                 myDB.addBook(title_input.getText().toString().trim(),
                         author_input.getText().toString().trim(),
                         Integer.valueOf(pages_input.getText().toString().trim()));
+
+                // Limpar os campos de entrada após adicionar o livro
+                title_input.setText("");
+                author_input.setText("");
+                pages_input.setText("");
+
+                // Indicar que a operação foi bem-sucedida e encerrar a atividade
+                setResult(RESULT_OK);
+                finish();
             }
         });
     }
